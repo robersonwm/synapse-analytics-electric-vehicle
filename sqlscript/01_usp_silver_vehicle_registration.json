@@ -1,0 +1,20 @@
+{
+	"name": "01_usp_silver_vehicle_registration",
+	"properties": {
+		"folder": {
+			"name": "electric_vehicle/ldw/user_sp"
+		},
+		"content": {
+			"query": "USE electric_vehicle_ldw\nGO\n\n/*procedimiento almacenado que itera procesando cada una de las particiones de archivo de un directorio en el datalake y \n    guarda el resultado particionado en otro directorio - la consulta select de origen se realiza a una vista de la tabla externa de los datos*/\n\nDROP PROCEDURE IF EXISTS silver.usp_silver_vehicle_registration\nGO\n\nCREATE OR ALTER PROCEDURE silver.usp_silver_vehicle_registration\n@year VARCHAR(4),\n@month VARCHAR(2)\nAS\nBEGIN\n    DECLARE @create_sql_stmt NVARCHAR(MAX),\n            @drop_sql_stmt NVARCHAR(MAX)\n    SET @create_sql_stmt = '\n        CREATE EXTERNAL TABLE silver.vehicle_registration_' + @year + '_' + @month +'\n        WITH (\n        DATA_SOURCE = electric_vehicle_src, \n        LOCATION = ''silver/vehicle_registration/year=' + @year + '/month=' + @month + ''',  \n        FILE_FORMAT = parquet_file_format\n    )\n    AS\n    SELECT\n    \n        vehicleId       AS vehicle_id,\n        locationId      AS location_id,\n        propietaryId    AS propietary_id,\n        dolVehicleId    AS dol_vehicle_id,\n        registrationDate AS registration_date\n    FROM bronze.vw_vehicle_registration_csv\n    WHERE year = '''+ @year + ''' AND month = '''+ @month +'''\n    ';\n\n    PRINT(@create_sql_stmt)\n    EXEC sp_executesql @create_sql_stmt;\n\n    SET @drop_sql_stmt = \n        'DROP EXTERNAL TABLE silver.vehicle_registration_' + @year + '_' + @month;\n    \n    PRINT(@drop_sql_stmt)\n    EXEC sp_executesql @drop_sql_stmt;\nEND\nGO",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_ldw",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

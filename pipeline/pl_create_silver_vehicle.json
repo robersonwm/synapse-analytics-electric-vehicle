@@ -1,0 +1,75 @@
+{
+	"name": "pl_create_silver_vehicle",
+	"properties": {
+		"activities": [
+			{
+				"name": "Delete Silver Vehicle Folder",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "ds_silver_vehicle",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Create Silver Vehicle",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "Delete Silver Vehicle Folder",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "ls_serverless_sql_pool_db_electric_vehicle_ldw",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "NonQuery",
+							"text": "IF OBJECT_ID('silver.vehicle') IS NOT NULL DROP EXTERNAL TABLE silver.vehicle;"
+						},
+						{
+							"type": "NonQuery",
+							"text": " CREATE EXTERNAL TABLE silver.vehicle\n     WITH (\n        DATA_SOURCE = electric_vehicle_src,\n        LOCATION = 'silver/vehicle',   \n        FILE_FORMAT = parquet_file_format\n    )\n    AS\n    SELECT vehicleId as vehicle_id, vin,\n            modelYear as model_year, make, model, \n            electricRange as electric_range, \n            baseMSRP as base_msrp, \n            vehicheTypeId as vehicle_type_id, \n            cafvEligibilityId as cafvEligibility_id,  \n            CAST(\n                SUBSTRING(\n                    vehicleLocation,\n                    CHARINDEX(' ', vehicleLocation) + 2,\n                    CHARINDEX(' ', vehicleLocation, CHARINDEX(' ', vehicleLocation) +1) - CHARINDEX(' ', vehicleLocation) -1\n                ) AS FLOAT\n            ) AS longitude,\n            CAST(\n                SUBSTRING(\n                    vehicleLocation,\n                    CHARINDEX(' ', vehicleLocation, CHARINDEX(' ', vehicleLocation) +1) +1,\n                    LEN(vehicleLocation) - CHARINDEX(' ', vehicleLocation, CHARINDEX(' ', vehicleLocation) +1) -1\n                ) AS FLOAT\n            ) AS latitude\n        FROM bronze.vehicle;"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			}
+		],
+		"folder": {
+			"name": "demo"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-08-25T02:31:54Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

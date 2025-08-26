@@ -1,0 +1,20 @@
+{
+	"name": "02_create_external_data_source",
+	"properties": {
+		"folder": {
+			"name": "electric_vehicle/ldw/utils"
+		},
+		"content": {
+			"query": "USE electric_vehicle_ldw\nGO\n\n--contenedor como external data source de SQL Database Serverless\nIF NOT EXISTS (SELECT name FROM sys.external_data_sources WHERE name = 'electric_vehicle_src')\nCREATE EXTERNAL DATA SOURCE electric_vehicle_src\nWITH\n(   LOCATION = 'https://entixcoviddl.dfs.core.windows.net/electric-vehicle-data'\n);\n\n\n\n--DROP EXTERNAL DATA SOURCE vehicle_rejections_ds;",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_ldw",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

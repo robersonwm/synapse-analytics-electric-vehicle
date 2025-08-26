@@ -1,0 +1,20 @@
+{
+	"name": "05_create_silver_cafv_eligibility",
+	"properties": {
+		"folder": {
+			"name": "electric_vehicle/ldw/ingestion"
+		},
+		"content": {
+			"query": "USE electric_vehicle_ldw\nGO\n\n--Crea la tabla externa \"cafv_eligibility\" a partir de un archivo .json en el esquema silver\nIF OBJECT_ID('silver.cafv_eligibility') IS NOT NULL DROP EXTERNAL TABLE silver.cafv_eligibility  --si existe la tabla externa, la elimina\nGO\n\n CREATE EXTERNAL TABLE silver.cafv_eligibility\n     WITH (\n        DATA_SOURCE = electric_vehicle_src,             --https://entixcoviddl.dfs.core.windows.net/electric-vehicle-data/\n        LOCATION = 'silver/cafv_eligibility',           --carpeta donde se almacenará el resultado de la ingesta y transformacion de datos   \n        FILE_FORMAT = parquet_file_format               --formato de salida de los datos (parquet)\n    )\n    AS\n        SELECT cafv_eligibility_id, classification\n        FROM OPENROWSET(\n            BULK 'bronze/cafv_eligibility.json',\n            DATA_SOURCE = 'electric_vehicle_src',\n            FORMAT = 'CSV',\n            FIELDTERMINATOR = '0x0b',  --valor hexadecimal, separador de columnas (vertical tab)\n            FIELDQUOTE = '0x0b',\n            ROWTERMINATOR= '0X0b'\n        ) WITH(\n            jsonDoc NVARCHAR(MAX)\n        )AS cafv_eligibility\n        CROSS APPLY OPENJSON(jsonDoc)  --une los valores de jsonDoc y los valores obtenidos del documento JSON en la matriz por OPENJSON\n        WITH(\n            cafv_eligibility_id SMALLINT '$.cafvEligibility', --cambia el nombre de la columna\n            classification VARCHAR(100)   \n        )\n        GO\n\nSELECT * FROM silver.cafv_eligibility\nGO\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_ldw",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

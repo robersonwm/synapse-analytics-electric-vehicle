@@ -1,0 +1,20 @@
+{
+	"name": "02_create_silver_calendar",
+	"properties": {
+		"folder": {
+			"name": "electric_vehicle/ldw/ingestion"
+		},
+		"content": {
+			"query": "USE electric_vehicle_ldw\nGO\n\nIF OBJECT_ID('silver.calendar') IS NOT NULL DROP EXTERNAL TABLE silver.calendar  --si existe la tabla externa, la elimina\nGO\n\n CREATE EXTERNAL TABLE silver.calendar\n     WITH (\n        DATA_SOURCE = electric_vehicle_src,             --https://entixcoviddl.dfs.core.windows.net/electric-vehicle-data/\n        LOCATION = 'silver/calendar',                    --carpeta donde se almacenará el resultado de la ingesta y transformacion de datos   \n        FILE_FORMAT = parquet_file_format               --formato de salida de los datos (parquet)\n    )\n    AS\n    SELECT *\n        FROM bronze.calendar\n    GO\n\nSELECT * FROM silver.calendar\nGO",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_ldw",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

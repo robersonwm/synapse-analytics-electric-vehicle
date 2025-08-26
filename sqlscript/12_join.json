@@ -1,0 +1,20 @@
+{
+	"name": "12_join",
+	"properties": {
+		"folder": {
+			"name": "electric_vehicle/explorer"
+		},
+		"content": {
+			"query": "--muestra la cantidad de vehiculos electricos e hibridos\nUSE electric_vehicle_explorer;\n\nSELECT\n    electric_vehicle_type,\n    COUNT(1) AS number_of_vehicle\nFROM OPENROWSET(\n    BULK 'https://entixcoviddl.dfs.core.windows.net/electric-vehicle-data/bronze/vehicle.csv',\n    FORMAT = 'CSV',\n    PARSER_VERSION = '2.0',\n    HEADER_ROW = TRUE\n) WITH (\n    vehicheTypeId     SMALLINT 8\n) AS vehicle\nJOIN\n    OPENROWSET(\n        BULK 'vehicle_type.json',\n        DATA_SOURCE = 'electric_vehicle_data_bronze',\n        FORMAT = 'CSV',\n        FIELDTERMINATOR = '0x0b',\n        FIELDQUOTE = '0x0b'\n    ) WITH(\n        jsonDoc NVARCHAR(MAX)       --util para utilizar OPENJSON\n    )AS vehicle_type\n    CROSS APPLY OPENJSON(jsonDoc)   --une los valores de jsonDoc y los valores obtenidos del documento JSON enla matriz por OPENJSON\n    WITH(\n        vehicleType SMALLINT,\n        electric_vehicle_type VARCHAR(50) '$.electricVehicleType'   --cambia el nombre de la columna\n    )\n    ON vehicle.vehicheTypeId = vehicleType\n    GROUP BY electric_vehicle_type\n    ORDER BY electric_vehicle_type\n    ;\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_explorer",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

@@ -1,0 +1,20 @@
+{
+	"name": "09_usp_create_silver_vehicle_type",
+	"properties": {
+		"folder": {
+			"name": "electric_vehicle/ldw/user_sp"
+		},
+		"content": {
+			"query": "USE electric_vehicle_ldw\nGO\n\n--Este SP reemplaza la creación manual de la tabla externa para crearla de forma automatica desde un pipeline \nCREATE OR ALTER PROCEDURE silver.usp_silver_vehicle_type\nAS\nBEGIN\nIF OBJECT_ID('silver.vehicle_type') IS NOT NULL DROP EXTERNAL TABLE silver.vehicle_type;  --si existe la tabla externa, la elimina\n\n CREATE EXTERNAL TABLE silver.vehicle_type\n     WITH (\n        DATA_SOURCE = electric_vehicle_src,             --https://entixcoviddl.dfs.core.windows.net/electric-vehicle-data/\n        LOCATION = 'silver/vehicle_type',               --carpeta donde se almacenará el resultado de la ingesta y transformacion de datos   \n        FILE_FORMAT = parquet_file_format               --formato de salida de los datos (parquet)\n    )\n    AS\n        SELECT vehicle_type, electric_vehicle_type\n        FROM OPENROWSET(\n            BULK 'bronze/vehicle_type.json',\n            DATA_SOURCE = 'electric_vehicle_src',\n            FORMAT = 'CSV',\n            FIELDTERMINATOR = '0x0b',  --valor hexadecimal, separador de columnas (vertical tab)\n            FIELDQUOTE = '0x0b'\n        ) WITH(\n            jsonDoc NVARCHAR(MAX)\n        )AS vehicle_type\n        CROSS APPLY OPENJSON(jsonDoc)  --une los valores de jsonDoc y los valores obtenidos del documento JSON en la matriz por OPENJSON\n        WITH(\n            vehicle_type SMALLINT '$.vehicleType', --cambia el nombre de la columna\n            electric_vehicle_type VARCHAR(500) '$.electricVehicleType'   \n        );\nEND;",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_ldw",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

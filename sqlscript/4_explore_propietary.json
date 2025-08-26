@@ -1,0 +1,20 @@
+{
+	"name": "4_explore_propietary",
+	"properties": {
+		"folder": {
+			"name": "electric_vehicle/explorer"
+		},
+		"content": {
+			"query": "--CONSULTAR EL ARCHIVO calendar.csv\nUSE electric_vehicle_explorer;\nCREATE EXTERNAL DATA SOURCE propietary_data_bronze\nWITH( \n    LOCATION = 'abfss://electric-vehicle-data@entixcoviddl.dfs.core.windows.net/bronze/'\n);\n\nSELECT TOP 100 *\nFROM OPENROWSET(\n    BULK 'propietary.tsv',\n    DATA_SOURCE = 'propietary_data_bronze',\n    FORMAT = 'CSV',\n    PARSER_VERSION = '2.0',\n    HEADER_ROW = TRUE,\n    FIELDTERMINATOR = '\\t'  --campos separtados por una tabulación\n) AS propietary;\n\n\n--tipo de datos y largos asignados por Synapse\nEXEC sp_describe_first_result_set N'SELECT TOP 100 *\nFROM OPENROWSET(\n    BULK ''propietary.tsv'',\n    DATA_SOURCE = ''propietary_data_bronze'',\n    FORMAT = ''CSV'',\n    PARSER_VERSION = ''2.0'',\n    HEADER_ROW = TRUE,\n    FIELDTERMINATOR = ''\\t''\n) AS propietary;'\n\n\n--cambia, para efectos de consulta, el tipo y largo de datos. Tambien asigna en numero de columna a la que hace referencia en el archivo\nSELECT TOP 100 *\nFROM OPENROWSET(\n    BULK 'propietary.tsv',\n    DATA_SOURCE = 'propietary_data_bronze',\n    FORMAT = 'CSV',\n    PARSER_VERSION = '2.0',\n    HEADER_ROW = TRUE,\n    FIELDTERMINATOR = '\\t'\n) WITH(\n        propietaryId              INT 1,\n        electricUtility           VARCHAR(200) 2\n)AS propietary;\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_explorer",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

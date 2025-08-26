@@ -1,0 +1,20 @@
+{
+	"name": "11_vehicle_total_by_make",
+	"properties": {
+		"folder": {
+			"name": "electric_vehicle/explorer"
+		},
+		"content": {
+			"query": "-- Vehicle total by make\nUSE electric_vehicle_explorer;\n\nSELECT make,\ncount(make) as total_count\nFROM OPENROWSET(\n    BULK 'https://entixcoviddl.dfs.core.windows.net/electric-vehicle-data/bronze/vehicle.csv',\n    FORMAT = 'CSV',\n    PARSER_VERSION = '2.0',\n    HEADER_ROW = TRUE\n) WITH (\n    vehicleId         INT 1,\n    vin               VARCHAR(10) 2,\n    modelYear         SMALLINT 3,\n    make              VARCHAR(25) 4,\n    model             VARCHAR(25) 5,\n    electricRange     SMALLINT 6,\n    baseMSRP          INT 7,\n    vehicheTypeId     SMALLINT 8,\n    cafvEligibilityId SMALLINT 9,\n    vehicleLocation   VARCHAR(30) 10\n) AS [result]\nGROUP BY make\nHAVING count(make) > 1000;",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_explorer",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

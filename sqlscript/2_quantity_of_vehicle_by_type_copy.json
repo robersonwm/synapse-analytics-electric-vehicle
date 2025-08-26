@@ -1,0 +1,17 @@
+{
+	"name": "2_quantity_of_vehicle_by_type_copy",
+	"properties": {
+		"content": {
+			"query": "--Copia de datos con la creacion de la tabla de forma automática\nCOPY INTO dwh.quantity_of_vehicle_by_type_copy\nFROM 'https://entixcoviddl.dfs.core.windows.net/electric-vehicle-data/gold/quantity_of_vehicle_by_type'\nWITH\n(\n\tFILE_TYPE = 'PARQUET',\n\tMAXERRORS = 0,\n\tAUTO_CREATE_TABLE = 'ON'\n)\nGO\n\n/*\n--Creacion de la tabla de destino de forma manual\nIF NOT EXISTS (SELECT * FROM sys.objects O JOIN sys.schemas S ON O.schema_id = S.schema_id WHERE O.NAME = 'quantity_of_vehicle_by_type_copy' AND O.TYPE = 'U' AND S.NAME = 'dwh')\nCREATE TABLE dwh.quantity_of_vehicle_by_type_copy\n\t(\n\t [year] smallint,\n\t [month] tinyint,\n\t [make] nvarchar(50),\n\t [electric_vehicle_type] nvarchar(50),\n\t [vehicle_register_count] int\n\t)\nWITH\n\t(\n\tDISTRIBUTION = ROUND_ROBIN,\n\t CLUSTERED COLUMNSTORE INDEX\n\t -- HEAP\n\t)\nGO\n*/\n\n\n\nSELECT TOP 100 * FROM dwh.quantity_of_vehicle_by_type_copy\nGO",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_dwh",
+				"poolName": "electric_vehicle_dwh"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

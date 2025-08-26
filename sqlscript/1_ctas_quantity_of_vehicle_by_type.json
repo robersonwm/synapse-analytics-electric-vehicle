@@ -1,0 +1,20 @@
+{
+	"name": "1_ctas_quantity_of_vehicle_by_type",
+	"properties": {
+		"folder": {
+			"name": "electric_vehicle/dwh"
+		},
+		"content": {
+			"query": "--Copiar a Dedicated SQL Pool con Polybase\n\nCREATE SCHEMA staging\nGO\n\n--Crea una tabla externa en SQL Dedicated Pool a partir de datos particionados por fecha en el Datalake\nIF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'parquet_file_format') \n\tCREATE EXTERNAL FILE FORMAT parquet_file_format\n\tWITH ( FORMAT_TYPE = PARQUET)\nGO\n\nIF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'electric_vehicle_data_src') \n\tCREATE EXTERNAL DATA SOURCE electric_vehicle_data_src \n\tWITH (\n\t\tLOCATION = 'abfss://electric-vehicle-data@entixcoviddl.dfs.core.windows.net' \n\t)\nGO\n\nCREATE EXTERNAL TABLE staging.ext_quantity_of_vehicle_by_type (\n\t[year] smallint,\n\t[month] tinyint,\n\t[make] nvarchar(50),\n\t[electric_vehicle_type] nvarchar(50),\n\t[vehicle_register_count] int\n\t)\n\tWITH (\n\tLOCATION = 'gold/quantity_of_vehicle_by_type',\n\tDATA_SOURCE = electric_vehicle_data_src,\n\tFILE_FORMAT = parquet_file_format\n\t)\nGO\n\n\nSELECT TOP 100 * FROM staging.ext_quantity_of_vehicle_by_type\nGO\n\n\n------------------------------------------------------------------------------------------------------\nCREATE SCHEMA dwh\nGO\n\n--Crea una tabla interna de SQL Dedicated Pool a partir de la tabla externa\nCREATE TABLE dwh.quantity_of_vehicle_by_type\n    WITH ( \n      DISTRIBUTION = ROUND_ROBIN,\n\t  CLUSTERED COLUMNSTORE INDEX\n    )  \n    AS \n\tSELECT * FROM staging.ext_quantity_of_vehicle_by_type \nGO\n\n\nSELECT * FROM dwh.quantity_of_vehicle_by_type;\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_dwh",
+				"poolName": "electric_vehicle_dwh"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

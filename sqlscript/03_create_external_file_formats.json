@@ -1,0 +1,20 @@
+{
+	"name": "03_create_external_file_formats",
+	"properties": {
+		"folder": {
+			"name": "electric_vehicle/ldw/utils"
+		},
+		"content": {
+			"query": "USE electric_vehicle_ldw\nGO\n\n-- FILE FORMAT para la tabla de vehicle.csv\nIF NOT EXISTS (SELECT name FROM sys.external_file_formats WHERE name = 'csv_file_format')\nCREATE EXTERNAL FILE FORMAT csv_file_format\nWITH (\n        FORMAT_TYPE = DELIMITEDTEXT,\n        FORMAT_OPTIONS (\n            FIELD_TERMINATOR = ',',\n            STRING_DELIMITER = '\"',                --terminador de los campos de tipo string\n            FIRST_ROW = 2,                         --datos a partir de la segunda fila\n            USE_TYPE_DEFAULT = FALSE,              --valor por defecto para datos null\n            ENCODING = 'UTF8',\n            PARSER_VERSION = '2.0'\n        )\n    );\n\n\n--FILE FORMAT para la tabla de calendar.csv\nIF NOT EXISTS (SELECT name FROM sys.external_file_formats WHERE name = 'csv_file_format_v2')\nCREATE EXTERNAL FILE FORMAT csv_file_format_v2\nWITH (\n        FORMAT_TYPE = DELIMITEDTEXT,\n        FORMAT_OPTIONS (\n            FIELD_TERMINATOR = ';',\n            STRING_DELIMITER = '\"',                --terminador de los campos de tipo string\n            FIRST_ROW = 2,                         --datos a partir de la segunda fila\n            USE_TYPE_DEFAULT = FALSE,              --valor por defecto para datos null\n            ENCODING = 'UTF8',\n            PARSER_VERSION = '2.0'\n        )\n    );\n\n\n--FILE FORMAT para la tabla de location.csv\nIF NOT EXISTS (SELECT name FROM sys.external_file_formats WHERE name = 'csv_file_format_v3')\nCREATE EXTERNAL FILE FORMAT csv_file_format_v3\nWITH (\n        FORMAT_TYPE = DELIMITEDTEXT,\n        FORMAT_OPTIONS (\n            FIELD_TERMINATOR = ';',\n            STRING_DELIMITER = '\\',                --terminador de los campos de tipo string\n            FIRST_ROW = 2,                         --datos a partir de la segunda fila\n            USE_TYPE_DEFAULT = FALSE,              --valor por defecto para datos null\n            ENCODING = 'UTF8',\n            PARSER_VERSION = '2.0'\n        )\n    );\n\n\n--FILE FORMAT para la tabla de propietary.csv\nIF NOT EXISTS (SELECT name FROM sys.external_file_formats WHERE name = 'tsv_file_format')\nCREATE EXTERNAL FILE FORMAT tsv_file_format\nWITH (\n        FORMAT_TYPE = DELIMITEDTEXT,\n        FORMAT_OPTIONS (\n            FIELD_TERMINATOR = '\\t',\n            STRING_DELIMITER = '\"',                --terminador de los campos de tipo string\n            FIRST_ROW = 2,                         --datos a partir de la segunda fila\n            USE_TYPE_DEFAULT = FALSE,              --valor por defecto para datos null\n            ENCODING = 'UTF8',\n            PARSER_VERSION = '2.0'\n        )\n    );\n\n\n--DROP EXTERNAL FILE FORMAT vehicle_csv_format;\n\n\n--FILE FORMAT para la tabla .parquet\nIF NOT EXISTS (SELECT name FROM sys.external_file_formats WHERE name = 'parquet_file_format')\nCREATE EXTERNAL FILE FORMAT parquet_file_format\nWITH (\n         FORMAT_TYPE = PARQUET,\n        DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'\n    );\n\n\n\n--FILE FORMAT para la tabla .delta\nIF NOT EXISTS (SELECT name FROM sys.external_file_formats WHERE name = 'delta_file_format')\nCREATE EXTERNAL FILE FORMAT delta_file_format\nWITH (\n         FORMAT_TYPE = DELTA\n    );\n\n    ",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_ldw",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

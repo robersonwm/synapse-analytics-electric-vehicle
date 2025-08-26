@@ -1,0 +1,20 @@
+{
+	"name": "06_usp_create_silver_propietary",
+	"properties": {
+		"folder": {
+			"name": "electric_vehicle/ldw/user_sp"
+		},
+		"content": {
+			"query": "USE electric_vehicle_ldw\nGO\n\n--Este SP reemplaza la creación manual de la tabla externa para crearla de forma automatica desde un pipeline \nCREATE OR ALTER PROCEDURE silver.usp_silver_propietary\nAS\nBEGIN\nIF OBJECT_ID('silver.propietary') IS NOT NULL DROP EXTERNAL TABLE silver.propietary;  --si existe la tabla externa, la elimina\n\n    CREATE EXTERNAL TABLE silver.propietary\n        WITH (\n            DATA_SOURCE = electric_vehicle_src,             --https://entixcoviddl.dfs.core.windows.net/electric-vehicle-data/\n            LOCATION = 'silver/propietary',                --carpeta donde se almacenará el resultado de la ingesta y transformacion de datos   \n            FILE_FORMAT = parquet_file_format               --formato de salida de los datos (parquet)\n        )\n        AS\n        SELECT *\n            FROM bronze.propietary;\nEND;",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_ldw",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

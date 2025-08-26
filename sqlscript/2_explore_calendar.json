@@ -1,0 +1,20 @@
+{
+	"name": "2_explore_calendar",
+	"properties": {
+		"folder": {
+			"name": "electric_vehicle/explorer"
+		},
+		"content": {
+			"query": "--CONSULTAR EL ARCHIVO calendar.csv\nUSE electric_vehicle_explorer;\nCREATE EXTERNAL DATA SOURCE calendar_data_bronze\nWITH( \n    LOCATION = 'abfss://electric-vehicle-data@entixcoviddl.dfs.core.windows.net/bronze/'\n);\n\nSELECT TOP 100 *\nFROM OPENROWSET(\n    BULK 'calendar.csv',\n    DATA_SOURCE = 'calendar_data_bronze',\n    FORMAT = 'CSV',\n    PARSER_VERSION = '2.0',\n    HEADER_ROW = TRUE,\n    FIELDTERMINATOR = ';',\n    ROWTERMINATOR = '\\n'\n) AS calendar;\n\n--tipo de datos y largos asignados por Synapse\nEXEC sp_describe_first_result_set N'SELECT TOP 100 *\nFROM OPENROWSET(\n    BULK ''calendar.csv'',\n    DATA_SOURCE = ''electric_vehicle_data_bronze'',\n    FORMAT = ''CSV'',\n    PARSER_VERSION = ''2.0'',\n    HEADER_ROW = TRUE,\n    FIELDTERMINATOR = '';'',\n    ROWTERMINATOR = ''\\n''\n) AS calendar;'\n\n\n--cambia, para efectos de consulta, el tipo y largo de datos. Tambien asigna en numero de columna a la que hace referencia en el archivo\nSELECT TOP 100 *\nFROM OPENROWSET(\n    BULK 'calendar.csv',\n    DATA_SOURCE = 'electric_vehicle_data_bronze',\n    FORMAT = 'CSV',\n    PARSER_VERSION = '2.0',\n    HEADER_ROW = TRUE,\n    FIELDTERMINATOR = ';',\n    ROWTERMINATOR = '\\n'\n) WITH(\n    dateKey INT 1,\n    date DATE 2,\n    year SMALLINT 3,\n    month TINYINT 4,\n    day TINYINT 5,\n    monthName VARCHAR(10) 6,\n    dayName VARCHAR(10) 7,\n    dayOfYear SMALLINT 8,\n    weekOfMonth TINYINT 9,\n    weekOfYear TINYINT 10\n)AS calendar;\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_explorer",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

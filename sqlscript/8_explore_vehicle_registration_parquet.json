@@ -1,0 +1,20 @@
+{
+	"name": "8_explore_vehicle_registration_parquet",
+	"properties": {
+		"folder": {
+			"name": "electric_vehicle/explorer"
+		},
+		"content": {
+			"query": "---CONSULTAR los archivos .parquet de vehicle_registration\nUSE electric_vehicle_explorer;\nSELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'vehicle_registration_parquet/year=2024/month=01/',\n        DATA_SOURCE = 'electric_vehicle_data_bronze',\n        FORMAT = 'PARQUET'\n    ) AS [result];\n\n\n--Indentifica los tipos de datos de las columnas en el archivo parquet\nEXEC sp_describe_first_result_set N'SELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK ''vehicle_registration_parquet/year=2024/month=01/'',\n        DATA_SOURCE = ''electric_vehicle_data_bronze'',\n        FORMAT = ''PARQUET''\n    ) AS [result];'\n\n\n--define columnas a consultar, el tipo y largo de datos\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'vehicle_registration_parquet/year=2024/month=01/',\n        DATA_SOURCE = 'electric_vehicle_data_bronze',\n        FORMAT = 'PARQUET'\n    ) WITH(\n        vehicleId INT, \n        registrationDate DATETIME2(7)\n    ) AS result;\n\n\n--consultar carpetas usando uncaracter comodin(wildcard)\nSELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'vehicle_registration_parquet/year=2024/month=01/*.parquet',\n        DATA_SOURCE = 'electric_vehicle_data_bronze',\n        FORMAT = 'PARQUET'\n    ) AS vr_data;\n\n\n--utilizar la funcion filename()\nSELECT\n    TOP 100\n    vr_data.filename() AS filename,     --muestra el archivo de donde se obtiene cada registro\n    vr_data.*\nFROM\n    OPENROWSET(\n        BULK 'vehicle_registration_parquet/year=2024/month=01/*.parquet',\n        DATA_SOURCE = 'electric_vehicle_data_bronze',\n        FORMAT = 'PARQUET'\n    ) AS vr_data;\n\n\n--consultar subcarpetas\nSELECT\n    TOP 100\n    vr_data.filepath() AS filepath,     --muestra la ruta del archivo de donde se obtiene cada registro\n    vr_data.*\nFROM\n    OPENROWSET(\n        BULK 'vehicle_registration_parquet/**',\n        DATA_SOURCE = 'electric_vehicle_data_bronze',\n        FORMAT = 'PARQUET'\n    ) AS vr_data;\n\n\n--utilizar la funcion filepath para seleccionar solo particiones especificas (año, mes)\nSELECT vr_data.filepath(1) AS year,\n    vr_data.filepath(2) AS month,\n    count(1) AS record_count\nFROM\n    OPENROWSET(\n        BULK 'vehicle_registration_parquet/year=*/month=*/*.parquet',\n        DATA_SOURCE = 'electric_vehicle_data_bronze',\n        FORMAT = 'PARQUET'\n    ) AS vr_data\nWHERE vr_data.filepath(1) = '2024'\n        and vr_data.filepath(2) IN ('06','07','08')     --consulta los meses especificos del año 2024\nGROUP BY vr_data.filepath(1), vr_data.filepath(2)\nORDER BY vr_data.filepath(1), vr_data.filepath(2);\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_explorer",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

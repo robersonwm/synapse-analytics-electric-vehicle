@@ -1,0 +1,20 @@
+{
+	"name": "5_explore_vehicle_type",
+	"properties": {
+		"folder": {
+			"name": "electric_vehicle/explorer"
+		},
+		"content": {
+			"query": "--CONSULTAR EL ARCHIVO explore_vehicle_type.json\nUSE electric_vehicle_explorer;\n\n--captura los valores de los campos del documento json, les asigna un tipo de dato y un nombre de columna\nSELECT CAST(JSON_VALUE(jsonDoc, '$.vehicleType') AS SMALLINT) AS vehicleType,\n    CAST(JSON_VALUE(jsonDoc, '$.electricVehicleType')AS VARCHAR(50)) AS electric_vehicle_type\nFROM OPENROWSET(\n    BULK 'vehicle_type.json',\n    DATA_SOURCE = 'electric_vehicle_data_bronze',\n    FORMAT = 'CSV',\n    FIELDTERMINATOR = '0x0b',  --valor hexadecimal, separador de columnas (vertical tab)\n    FIELDQUOTE = '0x0b',\n    ROWTERMINATOR= '0X0a'\n) WITH(\n    jsonDoc NVARCHAR(MAX)\n)AS vehicle_type;\n\n\n--tipo de datos y largos asignados por Synapse\nEXEC sp_describe_first_result_set N'\nSELECT CAST(JSON_VALUE(jsonDoc, ''$.vehicleType'') AS SMALLINT) AS vehicleType,\n    CAST(JSON_VALUE(jsonDoc, ''$.electricVehicleType'')AS VARCHAR(50)) AS electric_vehicle_type\nFROM OPENROWSET(\n    BULK ''vehicle_type.json'',\n    DATA_SOURCE = ''electric_vehicle_data_bronze'',\n    FORMAT = ''CSV'',\n    FIELDTERMINATOR = ''0x0b'',\n    FIELDQUOTE = ''0x0b'',\n    ROWTERMINATOR= ''0X0a''\n) WITH(\n    jsonDoc NVARCHAR(MAX)\n)AS vehicle_type;\n'\n\n--leer archivos JSO dentro de una matriz [{}]\n  --Open JSON convierte un JSON en formato tabular y transforma JSON en filas y columnas. \n  --Puede especificar los tipos de datos en lugar de utilizar la función CAST y seleccionar solo las columnas requeridas.\n\n  SELECT vehicleType, electric_vehicle_type\nFROM OPENROWSET(\n    BULK 'vehicle_type.json',\n    DATA_SOURCE = 'electric_vehicle_data_bronze',\n    FORMAT = 'CSV',\n    FIELDTERMINATOR = '0x0b',\n    FIELDQUOTE = '0x0b'\n) WITH(\n    jsonDoc NVARCHAR(MAX) --util para utilizar OPENJSON\n)AS vehicle_type\nCROSS APPLY OPENJSON(jsonDoc)  --une los valores de jsonDoc y los valores obtenidos del documento JSON enla matriz por OPENJSON\nWITH(\n    vehicleType SMALLINT,\n    electric_vehicle_type VARCHAR(50) '$.electricVehicleType'   --cambia el nombre de la columna\n);\n\n\n--leer archivos JSON con submatriz interna (anidado)\n  --usar JSON_VALUE para explorar el archivo vehicle_type_array.json\nSELECT CAST(JSON_VALUE(jsonDoc, '$.vehicleType') AS SMALLINT) AS vehicleType,\n    CAST(JSON_VALUE(jsonDoc, '$.electricVehicleType[0].value')AS VARCHAR(50)) AS electric_vehicle_type_0,\n    CAST(JSON_VALUE(jsonDoc, '$.electricVehicleType[1].value')AS VARCHAR(50)) AS electric_vehicle_type_1\nFROM OPENROWSET(\n    BULK 'vehicle_type_array.json',\n    DATA_SOURCE = 'electric_vehicle_data_bronze',\n    FORMAT = 'CSV',\n    FIELDTERMINATOR = '0x0b',\n    FIELDQUOTE = '0x0b'\n) WITH(\n    jsonDoc NVARCHAR(MAX)\n)AS vehicle_type;    \n\n  --usar OPENJASON(optimo) para explorar el archivo vehicle_type_array.json\nSELECT vehicleType, electricVehicleType_value   --selecciono solo los valores deseados de cada documento\nFROM OPENROWSET(\n    BULK 'vehicle_type_array.json',\n    DATA_SOURCE = 'electric_vehicle_data_bronze',\n    FORMAT = 'CSV',\n    FIELDTERMINATOR = '0x0b',\n    FIELDQUOTE = '0x0b'\n) WITH(\n    jsonDoc NVARCHAR(MAX)\n)AS vehicle_type\nCROSS APPLY OPENJSON(jsonDoc)\nWITH(\n    vehicleType SMALLINT,\n    electricVehicleType NVARCHAR(MAX) AS JSON\n)\nCROSS APPLY OPENJSON(electricVehicleType)\nWITH(\n    sub_type SMALLINT,\n    electricVehicleType_value VARCHAR(50) '$.value'\n);\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_explorer",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

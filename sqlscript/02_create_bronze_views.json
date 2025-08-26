@@ -1,0 +1,20 @@
+{
+	"name": "02_create_bronze_views",
+	"properties": {
+		"folder": {
+			"name": "electric_vehicle/ldw/virtualization"
+		},
+		"content": {
+			"query": "USE electric_vehicle_ldw\nGO\n\n--CREA LA VISTA bronze.vw_cafv_elegibility \nDROP VIEW IF EXISTS bronze.vw_cafv_elegibility  --si existe la vista, la elimina\nGO\n\nCREATE VIEW bronze.vw_cafv_elegibility\nAS\nSELECT cafv_eligibility_id, classification\nFROM OPENROWSET(\n    BULK 'bronze/cafv_eligibility.json',\n    DATA_SOURCE = 'electric_vehicle_src',\n    FORMAT = 'CSV',\n    FIELDTERMINATOR = '0x0b',  --valor hexadecimal, separador de columnas (vertical tab)\n    FIELDQUOTE = '0x0b',\n    ROWTERMINATOR= '0X0b'\n) WITH(\n    jsonDoc NVARCHAR(MAX)\n)AS cafv_eligibility\nCROSS APPLY OPENJSON(jsonDoc)  --une los valores de jsonDoc y los valores obtenidos del documento JSON en la matriz por OPENJSON\nWITH(\n    cafv_eligibility_id SMALLINT '$.cafvEligibility', --cambia el nombre de la columna\n    classification VARCHAR(100)   \n)\nGO\n\nSELECT * FROM bronze.vw_cafv_elegibility;\n\n\n--CREA LA VISTA vw_vehicle_type\nDROP VIEW IF EXISTS bronze.vw_vehicle_type  --si existe la vista, la elimina\nGO\n\nCREATE VIEW bronze.vw_vehicle_type\nAS\nSELECT vehicleType, electric_vehicle_type\nFROM OPENROWSET(\n    BULK 'bronze/vehicle_type.json',\n    DATA_SOURCE = 'electric_vehicle_src',\n    FORMAT = 'CSV',\n    FIELDTERMINATOR = '0x0b',\n    FIELDQUOTE = '0x0b'\n) WITH(\n    jsonDoc NVARCHAR(MAX) --util para utilizar OPENJSON\n)AS vehicle_type\nCROSS APPLY OPENJSON(jsonDoc)  --une los valores de jsonDoc y los valores obtenidos del documento JSON enla matriz por OPENJSON\nWITH(\n    vehicleType SMALLINT,\n    electric_vehicle_type VARCHAR(50) '$.electricVehicleType'   --cambia el nombre de la columna\n)\nGO\n\n\nSELECT * FROM bronze.vw_vehicle_type\nGO\n\n\n\n--CREA LA VISTA vw_vehicle_registration_csv\n--tabla \"vehicle_registration_csv\" con datos particionados por año y fecha - no filtra datos de toda la tabla, lee directamente de la particion     \nDROP VIEW IF EXISTS bronze.vw_vehicle_registration_csv\nGO\n\nCREATE VIEW bronze.vw_vehicle_registration_csv\nAS\nSELECT \n    result.filepath(1) AS year,\n    result.filepath(2) AS month,\n    result.*\nFROM\n    OPENROWSET(\n        BULK 'bronze/vehicle_registration_csv/year=*/month=*/*',\n        DATA_SOURCE = 'electric_vehicle_src',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) WITH(\n        vehicleId           INT,\n        locationId          SMALLINT,\n        propietaryId        TINYINT,\n        dolVehicleId        INT,\n        registrationDate    DATETIME2(7)\n    )AS [result]\nGO\n\nSELECT COUNT(*) FROM bronze.vw_vehicle_registration_csv;\n\nSELECT COUNT(*) \nFROM bronze.vw_vehicle_registration_csv \nWHERE year = '2024' and month = '01';\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_ldw",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

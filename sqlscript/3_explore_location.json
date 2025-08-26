@@ -1,0 +1,20 @@
+{
+	"name": "3_explore_location",
+	"properties": {
+		"folder": {
+			"name": "electric_vehicle/explorer"
+		},
+		"content": {
+			"query": "--CONSULTAR EL ARCHIVO calendar.csv\nUSE electric_vehicle_explorer;\nCREATE EXTERNAL DATA SOURCE location_data_bronze\nWITH( \n    LOCATION = 'abfss://electric-vehicle-data@entixcoviddl.dfs.core.windows.net/bronze/'\n);\n\nSELECT TOP 100 *\nFROM OPENROWSET(\n    BULK 'location.csv',\n    DATA_SOURCE = 'location_data_bronze',\n    FORMAT = 'CSV',\n    PARSER_VERSION = '2.0',\n    HEADER_ROW = TRUE,\n    FIELDTERMINATOR = ';',\n    FIELDQUOTE = '\\',       --marca el inicio y fin de un campo de texto\n    ROWTERMINATOR = '\\n'\n) AS location;\n\n\n--tipo de datos y largos asignados por Synapse\nEXEC sp_describe_first_result_set N'SELECT TOP 100 *\nFROM OPENROWSET(\n    BULK ''location.csv'',\n    DATA_SOURCE = ''location_data_bronze'',\n    FORMAT = ''CSV'',\n    PARSER_VERSION = ''2.0'',\n    HEADER_ROW = TRUE,\n    FIELDTERMINATOR = '';'',\n    FIELDQUOTE = ''\\'', \n    ROWTERMINATOR = ''\\n''\n) AS location;'\n\n\n--cambia, para efectos de consulta, el tipo y largo de datos. Tambien asigna en numero de columna a la que hace referencia en el archivo\nSELECT TOP 100 *\nFROM OPENROWSET(\n    BULK 'location.csv',\n    DATA_SOURCE = 'location_data_bronze',\n    FORMAT = 'CSV',\n    PARSER_VERSION = '2.0',\n    HEADER_ROW = TRUE,\n    FIELDTERMINATOR = ';',\n    FIELDQUOTE = '\\',\n    ROWTERMINATOR = '\\n'\n) WITH(\n        locationId              INT 1,\n        county                  VARCHAR(100) 2,\n        city                    VARCHAR(100) 3,\n        state                   VARCHAR(10) 4,\n        postalCode              INT 5,\n        legislativeDistrict     INT 6,\n        censusTract             BIGINT 7\n)AS location;\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "electric_vehicle_explorer",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
